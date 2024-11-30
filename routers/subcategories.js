@@ -1,6 +1,6 @@
 const express = require('express');
-const SubCategory = require('../models/sub-category');
 const Category = require('../models/category');
+const SubCategory = require('../models/sub-category');
 const router = express.Router();
 
 // Get all subcategories
@@ -39,7 +39,7 @@ router.get('/category/:categoryId', async (req, res) => {
 
 // Add new subcategory
 router.post('/add', async (req, res) => {
-    const { subcat_name, category, metaTitle, metaDescription } = req.body;
+    const { subcat_name, subcat_slug, category, metaTitle, metaDescription } = req.body;
 
     try {
         const categoryExists = await Category.findById(category);
@@ -49,6 +49,7 @@ router.post('/add', async (req, res) => {
 
         const subCategory = new SubCategory({
             subcat_name,
+            subcat_slug,
             category: categoryExists._id, // Ensure correct reference to category ID
             metaTitle,
             metaDescription,
@@ -66,7 +67,7 @@ router.post('/add', async (req, res) => {
 
 // Update subcategory
 router.put('/edit/:id', async (req, res) => {
-    const { subcat_name, category, metaTitle, metaDescription } = req.body;
+    const { subcat_name, subcat_slug, category, metaTitle, metaDescription } = req.body;
 
     try {
         const categoryExists = await Category.findById(category);
@@ -77,6 +78,7 @@ router.put('/edit/:id', async (req, res) => {
         const updatedSubCategory = await SubCategory.findByIdAndUpdate(
             req.params.id,
             {   subcat_name,
+                subcat_slug,
                 category: categoryExists._id, 
                 metaTitle,
                 metaDescription

@@ -18,16 +18,16 @@ app.use('/public/uploads/gallery', express.static(__dirname + '/public/uploads/g
 app.use('/public/uploads/singleImg', express.static(__dirname + '/public/uploads/singleImg')); 
 
 app.use(morgan('tiny'));
-
+        
 // Use authJwt middleware, excluding certain routes
 /*app.use(authJwt().unless({ path: [
     { url: /\/api\/v1\/users\/login/, methods: ['POST'] },
     { url: /\/api\/v1\/users\/register/, methods: ['POST'] }
 ]}));*/
-
+  
 // Error handling middleware
-app.use(errorHandler);
-
+app.use(errorHandler); 
+  
 const api = process.env.API_URL;
 
 const productsRouter = require('./routers/products');
@@ -38,20 +38,22 @@ const subcategoriesRouter = require('./routers/subcategories'); // Correct impor
 const reviewsRouter = require('./routers/reviews'); // Correct import
 const cartRouter = require('./routers/carts');
 const pincodeRouter = require('./routers/pincodes');
+const subsubcategoriesRouter = require('./routers/subsubcategories')
 
 app.use(`${api}/users`, usersRouter);
 app.use(`${api}/categories`, categoriesRouter);
 app.use(`${api}/orders`, ordersRouter);
 app.use(`${api}/products`, productsRouter);
 app.use(`${api}/subcategories`, subcategoriesRouter); // Correct use
+app.use(`${api}/subsubcategories`, subsubcategoriesRouter); // Correct use
 app.use(`${api}/reviews`, reviewsRouter); // Correct use
 app.use(`${api}/carts`, cartRouter);
 app.use(`${api}/pincodes`,pincodeRouter)
 
-mongoose.set('debug', true);
+mongoose.set('debug', true);  
 
-mongoose.connect(process.env.CONNECTION_STRING)
-    .then(() => {
+mongoose.connect(process.env.CONNECTION_STRING)    
+    .then(() => {   
         console.log("Database connection is ready for work...");
     })
     .catch((error) => {
@@ -59,5 +61,6 @@ mongoose.connect(process.env.CONNECTION_STRING)
     });
 
 app.listen(4000, () => {
-    console.log('Server is running at http://localhost:4000');
+    console.log('Server is running at http://localhost:4000');  
 });
+  

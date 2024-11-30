@@ -20,4 +20,4 @@ orderItemSchema.set('toJSON', {
     virtuals: true
 });
 
-module.exports = mongoose.model('OrderItem', orderItemSchema);
+module.exports = mongoose.model('OrderItem', orderItemSchema);  

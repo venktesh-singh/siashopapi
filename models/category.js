@@ -5,6 +5,10 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    cat_slug: {
+        type: String,
+        default: ''
+    },
     metaTitle: {
         type: String,
         default: ''
@@ -16,7 +20,7 @@ const categorySchema = new mongoose.Schema({
     dateCreated: {
         type: Date,
         default: Date.now
-    }
+    }  
 });
 
 const Category = mongoose.model('Category', categorySchema);

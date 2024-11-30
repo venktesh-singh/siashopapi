@@ -24,7 +24,7 @@ pincodeSchema.virtual('id').get(function () {
 });
 
 pincodeSchema.set('toJSON', {
-    virtuals: true
+    virtuals: true  
 });
 
 const Pincode = mongoose.model('Pincode', pincodeSchema);

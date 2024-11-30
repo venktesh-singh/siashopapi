@@ -19,7 +19,7 @@ const productSchema = new mongoose.Schema({
     },
     product_gallery: [{
         type: String 
-    }], 
+    }],   
     brand: {
         type: String,
         default: ''
@@ -36,6 +36,11 @@ const productSchema = new mongoose.Schema({
     subcategory: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SubCategory',
+        required: true
+    },
+    subsubcategory:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'Subsubcategory',
         required: true
     },
     countInStock: {
@@ -58,6 +63,10 @@ const productSchema = new mongoose.Schema({
     },
     isFeatured: {
         type: Boolean,
+        default: false
+    },
+    product_slug: {
+        type: String,
         default: false
     },
     availablePinCode: [{

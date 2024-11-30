@@ -2,8 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const Cart = require('../models/cart');
 const  Order  = require('../models/order');
-const  OrderItem  = require('../models/order-item');  
-console.log('OrderItem model:', OrderItem);
+const  OrderItem  = require('../models/order-item'); 
 
 router.post('/add', async (req, res) => {
     try {
@@ -104,9 +103,9 @@ router.post('/checkout', async (req, res) => {
     try {
         const { orderItems, shippingAddress1, shippingAddress2, city, zip, country, phone, totalPrice, user } = req.body;
         
-        console.log('Checkout request received with body:', req.body);
-
+        
         const cart = await Cart.findOne({ user }).populate('items.product');
+        console.log('Checkout request received with body:', cart);
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
         }

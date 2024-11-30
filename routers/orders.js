@@ -14,6 +14,7 @@ router.get('/', async (req, res) => {
                     {
                         path: 'product',
                         populate: [
+                            { path: 'subsubcategory' },
                             { path: 'subcategory' },
                             { path: 'category' }
                         ]

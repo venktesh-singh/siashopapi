@@ -18,7 +18,7 @@ const cartSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    },
+    },  
     items: [cartItemSchema],
     dateCreated: {
         type: Date,

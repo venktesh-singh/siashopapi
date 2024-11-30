@@ -20,7 +20,7 @@ const reviewSchema = mongoose.Schema({
     reviewText: {
         type: String,
         required: true
-    },
+    },   
     dateReviewed: {
         type: Date,
         default: Date.now

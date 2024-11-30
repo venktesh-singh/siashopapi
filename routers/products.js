@@ -3,9 +3,13 @@ const router = express.Router();
 const Product = require('../models/product');
 const Category= require('../models/category');
 const SubCategory = require('../models/sub-category');
+const Subsubcategory = require('../models/sub-subcategory');
 const mongoose = require('mongoose');
 const upload = require('../helper/uploadOptions');
 const Pincode = require('../models/pincode');
+const csvParser = require('csv-parser');
+const fs = require('fs');
+const multer = require('multer');
 
 
 router.get(`/`, async (req, res) => {
@@ -20,7 +24,7 @@ router.get(`/`, async (req, res) => {
             const SubCatA = req.query.subcategories.split(',').map(id => id.trim);
             filter.subcategory = { $in: SubCatA}
         }
-        const products = await Product.find(filter).sort({ dateCreated: -1 }).populate('category').populate('subcategory').populate('review');
+        const products = await Product.find(filter).sort({ dateCreated: -1 }).populate('category').populate('subcategory').populate('subsubcategory');
         res.send(products);
     } catch (err) {
         res.status(500).json({
@@ -32,7 +36,7 @@ router.get(`/`, async (req, res) => {
 
 
 router.get(`/:id`, async (req, res) => {
-    const product = await Product.findById(req.params.id).populate('category').populate('subcategory').populate('review');
+    const product = await Product.findById(req.params.id).populate('category').populate('subcategory').populate('subsubcategory').populate('review');
     if(!product) return res.status(500).json({success:false});
     res.send(product);
 })
@@ -49,6 +53,11 @@ router.post('/add', upload, async (req, res) => {
             return res.status(400).send({ success: false, message: "Invalid Subcategory!" });
         }
 
+        const subsubcategory = await Subsubcategory.findById(req.body.subsubcategory);
+        if(!subsubcategory){
+            return res.status(400).send({ success: false, message: "Invalid Subsubcategory!" })
+        }
+
         let newProductData = {
             product_name: req.body.product_name,
             description: req.body.description,
@@ -57,11 +66,13 @@ router.post('/add', upload, async (req, res) => {
             price: req.body.price,
             category: req.body.category,
             subcategory: req.body.subcategory,
+            subsubcategory: req.body.subsubcategory,
             countInStock: req.body.countInStock,
             rating: req.body.rating,
             numReviews: req.body.numReviews,
             metaTitle: req.body.metaTitle,
             metaDescription: req.body.metaDescription,
+            product_slug:req.body.product_slug,
             isFeatured: req.body.isFeatured
         };
 
@@ -110,6 +121,11 @@ router.put('/edit/:id', upload, async (req, res) => {
             return res.status(400).send({ success: false, message: "Invalid Subcategory!" });
         }
 
+        const subsubcategory = await Subsubcategory.findById(req.body.subsubcategory);
+        if(!subsubcategory){
+            return res.status(400).send({ success: false, message:"Invalid Subsubcategory!" })
+        }
+
         let productUpdateData = {
             product_name: req.body.product_name,
             description: req.body.description,
@@ -118,11 +134,13 @@ router.put('/edit/:id', upload, async (req, res) => {
             price: req.body.price,
             category: req.body.category,
             subcategory: req.body.subcategory,
+            subsubcategory: req.body.subsubcategory,
             countInStock: req.body.countInStock,
             rating: req.body.rating,
             numReviews: req.body.numReviews,
             metaTitle: req.body.metaTitle,
             metaDescription: req.body.metaDescription,
+            product_slug:req.body.product_slug,
             isFeatured: req.body.isFeatured
         };
 
@@ -466,6 +484,58 @@ router.get('/get/subcatsearch', async (req, res) => {
             error: 'Internal server error',
             success: false
         });
+    }
+});
+
+
+const csvUpload = multer({ dest: 'public/uploads/productcsv' });
+
+router.post('/importcsvproduct', upload, csvUpload.single('import-csv-file'),  async (req, res) => {
+    try {
+        const results = [];
+        
+        // Check if a file is uploaded
+        if (!req.file) {
+            return res.status(400).send("No file uploaded.");
+        }
+
+        console.log("Reading CSV file...");
+        
+        fs.createReadStream(req.file.path)
+            .pipe(csvParser())
+            .on('data', (product) => results.push(product))  // Use 'data' event, not 'product'
+            .on('end', async () => {
+                try {
+                    
+                    const category = await Category.findById(req.body.category); console.log("check Category", category)
+                    if(!category){
+                        return res.status(404).send({ success: false, message: "Invalid Category!" });
+                    } 
+
+                    const subcategory = await SubCategory.findById(req.body.subcategory);
+                    if(!subcategory){
+                        return res.status(404).send({ success: false, message: "Invalid Subcategory!" });
+                    }
+                    console.log("Check Results",results)
+                    const check = await Product.insertMany(results);
+                    console.log("Check Data", check)
+
+
+                    console.log("CSV data imported successfully.");
+                    res.status(200).send("CSV Data Imported Successfully");
+                } catch (error) {
+                    console.error("Error importing data: ", error.message);
+                    res.status(500).send("Error importing data: " + error.message);
+                }
+            })
+            .on('error', (error) => {
+                console.error("Error reading CSV file: ", error.message);
+                res.status(500).send("Error reading CSV file: " + error.message);
+            });
+
+    } catch (error) {
+        console.error("Error processing CSV upload: ", error.message);
+        res.status(500).send("Error processing CSV upload: " + error.message);
     }
 });
 

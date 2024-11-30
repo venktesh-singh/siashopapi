@@ -34,6 +34,7 @@ router.post('/add', async (req, res) => {
 
         let category = new Category({
             cat_name: req.body.cat_name,
+            cat_slug: req.body.cat_slug,
             metaTitle: req.body.metaTitle,
             metaDescription: req.body.metaDescription
         });
@@ -59,6 +60,7 @@ router.put(`/edit/:id`, async (req, res) => {
             req.params.id,
             {
                 cat_name: req.body.cat_name,
+                cat_slug: req.body.cat_slug,
                 metaTitle: req.body.metaTitle,
                 metaDescription: req.body.metaDescription 
             },

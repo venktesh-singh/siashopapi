@@ -7,7 +7,7 @@ const orderSchema = new mongoose.Schema({
         required: true
     }],
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,  
         ref: 'User',
         required: true
     },
@@ -21,7 +21,7 @@ const orderSchema = new mongoose.Schema({
     city: {
         type: String,
         required: true
-    },
+    },   
     zip: {
         type: String,
         required: true

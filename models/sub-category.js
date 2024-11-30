@@ -18,7 +18,11 @@ const subcategorySchema = new mongoose.Schema({
         type: String,
         default: ''
     },
-    dateCreated: {
+    subcat_slug: {
+        type: String,
+        default: ''
+    },
+    dateCreated: {  
         type: Date,
         default: Date.now
     }
