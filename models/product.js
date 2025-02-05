@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Product Schema
 const productSchema = new mongoose.Schema({
     product_name: {
         type: String,
@@ -19,18 +20,14 @@ const productSchema = new mongoose.Schema({
     },
     product_gallery: [{
         type: String 
-    }],   
+    }],
     brand: {
         type: String,
         default: ''
     },
-    price: {
-        type: Number,
-        default: 0
-    },
     category: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category', 
+        ref: 'Category',
         required: true
     },
     subcategory: {
@@ -38,21 +35,36 @@ const productSchema = new mongoose.Schema({
         ref: 'SubCategory',
         required: true
     },
-    subsubcategory:{
+    subsubcategory: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Subsubcategory',
+        ref: 'Subsubcategory',
         required: true
+    },
+    isSingleProduct: {
+        type: Boolean,
+        default: true 
+    },
+    
+    price: {
+        type: Number,
+        default: 0
     },
     countInStock: {
         type: Number,
-        required: true,
         min: 0,
-        max: 255
+        default: 0
     },
-    review : {
+    
+    variation: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Variation' 
+        }
+    ],
+    review: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Review',  
-    },  
+        ref: 'Review'
+    },
     metaTitle: {
         type: String,
         default: ''
@@ -67,7 +79,7 @@ const productSchema = new mongoose.Schema({
     },
     product_slug: {
         type: String,
-        default: false
+        default: ''
     },
     availablePinCode: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -79,14 +91,17 @@ const productSchema = new mongoose.Schema({
     }
 });
 
+// Virtual Field for ID
 productSchema.virtual('id').get(function () {
     return this._id.toHexString();
 });
 
+// Enable Virtuals in JSON
 productSchema.set('toJSON', {
     virtuals: true
 });
 
+// Model for Product
 const Product = mongoose.model('Product', productSchema);
 
 module.exports = Product;

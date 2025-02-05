@@ -1,6 +1,8 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Category = require('../models/category');
 const SubCategory = require('../models/sub-category');
+const upload = require('../helper/uploadOptions');
 const router = express.Router();
 
 // Get all subcategories
@@ -38,64 +40,86 @@ router.get('/category/:categoryId', async (req, res) => {
 });
 
 // Add new subcategory
-router.post('/add', async (req, res) => {
-    const { subcat_name, subcat_slug, category, metaTitle, metaDescription } = req.body;
-
+router.post('/add', upload, async (req, res) => {
     try {
+        const { subcat_name, subcat_slug, category, metaTitle, metaDescription } = req.body;
+
+        if (!subcat_name || !category) {
+            return res.status(400).json({ message: 'Subcategory name and category are required' });
+        }
+
         const categoryExists = await Category.findById(category);
         if (!categoryExists) {
-            return res.status(404).send("Category not found!");
+            return res.status(404).json({ message: 'Category not found!' });
         }
 
         const subCategory = new SubCategory({
             subcat_name,
             subcat_slug,
-            category: categoryExists._id, // Ensure correct reference to category ID
+            category: categoryExists._id, // Correctly reference the category ID
             metaTitle,
             metaDescription,
         });
 
+        if (req.files && req.files['subcat_img'] && req.files['subcat_img'].length > 0) {
+            const filename = req.files['subcat_img'][0].filename;
+            subCategory.subcat_img = filename;
+        }
+
         await subCategory.save();
 
-        res.status(201).json({ subCategory });
+        res.status(201).json({ message: 'Subcategory added successfully', subCategory });
     } catch (error) {
-        console.error("Error creating subcategories:", error);
-        res.status(500).send("An error occurred while creating subcategories");
+        console.error('Error creating subcategories:', error);
+        res.status(500).json({ message: 'An error occurred while creating subcategories' });
     }
 });
 
 
 // Update subcategory
-router.put('/edit/:id', async (req, res) => {
-    const { subcat_name, subcat_slug, category, metaTitle, metaDescription } = req.body;
-
+router.put('/edit/:id', upload, async (req, res) => {
     try {
+        const { subcat_name, subcat_slug, category, metaTitle, metaDescription } = req.body;
+        const { id } = req.params;
+
+        if (!subcat_name || !category) {
+            return res.status(400).json({ message: 'Subcategory name and category are required' });
+        }
+
         const categoryExists = await Category.findById(category);
         if (!categoryExists) {
-            return res.status(404).send("Category not found!");
+            return res.status(404).json({ message: 'Category not found!' });
+        }
+        
+        const updatedSubCategory = {
+            subcat_name,
+            subcat_slug,
+            category: categoryExists._id, 
+            metaTitle,
+            metaDescription,
+        };
+
+        if (req.files && req.files['subcat_img'] && req.files['subcat_img'].length > 0) {
+            const filename = req.files['subcat_img'][0].filename;
+            updatedSubCategory.subcat_img = filename;
         }
 
-        const updatedSubCategory = await SubCategory.findByIdAndUpdate(
-            req.params.id,
-            {   subcat_name,
-                subcat_slug,
-                category: categoryExists._id, 
-                metaTitle,
-                metaDescription
-            },
-            { new: true, runValidators: true }
-        );
+        const subCategory = await SubCategory.findByIdAndUpdate(id, updatedSubCategory, { new: true });
 
-        if (!updatedSubCategory) {
-            return res.status(404).send("Subcategory not found!");
+        if (!subCategory) {
+            return res.status(404).json({ message: "Subcategory not found!" });
         }
 
-        res.status(200).json(updatedSubCategory);
+        res.status(200).json(subCategory);
     } catch (error) {
-        console.error("Error updating subcategory:", error);
-        res.status(500).send("An error occurred while updating the subcategory");
+        console.error("Error updating subcategory:", {
+            message: error.message,
+            stack: error.stack,
+        });
+        res.status(500).json({ message: "An error occurred while updating the subcategory" });
     }
 });
+
 
 
 // Delete subcategory

@@ -11,6 +11,10 @@ function authJwt() {
     }).unless({
         path: [
             { url: /^\/public\/upload\/product_img\/(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
+            { url: /^\/public\/upload\/variation\/(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
+            { url: /^\/public\/upload\/cat_img\/(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
+            { url: /^\/public\/upload\/subcat_img\/(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
+            { url: /^\/public\/upload\/subsubcat_img\/(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
             { url: /^\/public\/upload\/gallery_img\/(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
             { url: /\/api\/v1\/products(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
             { url: /\/api\/v1\/categories(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
@@ -19,6 +23,7 @@ function authJwt() {
             { url: /\/api\/v1\/orders(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
             { url: /\/api\/v1\/reviews(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
             { url: /\/api\/v1\/pincodes(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
+            { url: /\/api\/v1\/variations(.*)/, methods: ['GET', 'DELETE', 'POST', 'PUT', 'OPTIONS'] },
             `${api}/users/login`,
             `${api}/users/register`
         ]

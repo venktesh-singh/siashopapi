@@ -2,7 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Category = require('../models/category');
 const Subcategory = require('../models/sub-category');
-const Subsubcategory = require('../models/sub-subcategory')
+const Subsubcategory = require('../models/sub-subcategory');
+const upload = require('../helper/uploadOptions');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -85,7 +86,7 @@ router.get('/subcategory/:subcategoryID', async (req, res) => {
 });
 
 
-router.post('/add', async (req, res) => {
+router.post('/add', upload, async (req, res) => {
     try {
         const { category, subcategory, subsubcat_name, subsubcat_url, meta_title, meta_desc } = req.body;
         
@@ -120,6 +121,11 @@ router.post('/add', async (req, res) => {
             meta_desc
         });
 
+        if(req.files && req.files['subsubcat_img']){
+            let filename = req.files['subsubcat_img'][0].filename;
+            subsubcat.subsubcat_img = filename;
+        }
+
         await subsubcat.save();
         return res.status(200).json({ success: true, message: "Subsubcategory Added Successfully", subsubcat });
     } catch (error) {
@@ -130,11 +136,11 @@ router.post('/add', async (req, res) => {
 
 
 // Update subcategory
-router.put('/edit/:id', async (req, res) => {
+router.put('/edit/:id', upload, async (req, res) => {
     try {
         const { category, subcategory, subsubcat_name, subsubcat_url, meta_title, meta_desc } = req.body;
+        const { id } = req.params;
 
-        // Validate and find category
         if (!mongoose.Types.ObjectId.isValid(category)) {
             return res.status(400).json({ success: false, message: 'Invalid Category ID' });
         }
@@ -143,7 +149,6 @@ router.put('/edit/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Category Not Found' });
         }
 
-        // Validate and find subcategory
         if (!mongoose.Types.ObjectId.isValid(subcategory)) {
             return res.status(400).json({ success: false, message: 'Invalid Subcategory ID' });
         }
@@ -153,21 +158,24 @@ router.put('/edit/:id', async (req, res) => {
         }
 
         // Update subsubcategory
-        const subsubcat = await Subsubcategory.findByIdAndUpdate(
-            req.params.id,
-            {
+        const subsubcat = {
                 subsubcat_name,
                 meta_title,
                 meta_desc,
                 subsubcat_url,
                 category: cat._id,
                 subcategory: subcat._id
-            },
-            { new: true }
-        );
+            };
 
-        if (subsubcat) {
-            return res.status(200).json({ success: true, message: 'Subsubcategory Updated Successfully', subsubcat });
+        if(req.files && req.files['subsubcat_img']){
+            let filename = req.files['subsubcat_img'][0].filename;
+            subsubcat.subsubcat_img = filename;
+        }
+
+        const updateSubsubcat = await Subsubcategory.findByIdAndUpdate(id, subsubcat, {new:true});
+
+        if (updateSubsubcat) {
+            return res.status(200).json({ success: true, message: 'Subsubcategory Updated Successfully', updateSubsubcat });
         } else {
             return res.status(404).json({ success: false, message: 'Subsubcategory Not Updated' });
         }

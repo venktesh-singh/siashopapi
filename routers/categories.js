@@ -1,5 +1,6 @@
 const Category = require('../models/category');
 const SubCategory = require('../models/sub-category');
+const upload = require('../helper/uploadOptions');
 const express = require('express');
 const router  = express.Router();
 
@@ -28,54 +29,67 @@ router.get(`/:id`, async (req, res) => {
     res.status(200).send(category);
 })
 
-router.post('/add', async (req, res) => {
+router.post('/add', upload, async (req, res) => {
     try {
-        console.log('Incoming request:', req.body);
-
         let category = new Category({
             cat_name: req.body.cat_name,
             cat_slug: req.body.cat_slug,
             metaTitle: req.body.metaTitle,
-            metaDescription: req.body.metaDescription
+            metaDescription: req.body.metaDescription,
         });
 
-        category = await category.save();
-        if (!category) {
-            return res.status(404).json({ message: "Category Not Found!" });
+        if (req.files && req.files['cat_img'] && req.files['cat_img'].length > 0) {
+            const fileName = req.files['cat_img'][0].filename;
+            category.cat_img = fileName; 
+        } else {
+            return res.status(400).json({ message: 'Category Image is required' });
         }
 
-        return res.status(201).json(category);
+        category = await category.save();
+
+        if (!category) {
+            return res.status(500).json({ message: 'Failed to save the category' });
+        }
+
+        return res.status(201).json({ message: 'Category added successfully', category });
     } catch (error) {
         console.error('Error adding category:', error.message);
         console.error('Error stack:', error.stack);
-        return res.status(500).json({ message: "An error occurred while saving the category" });
+        return res.status(500).json({ message: 'An error occurred while saving the category' });
     }
 });
 
 
-router.put(`/edit/:id`, async (req, res) => {
+router.put('/edit/:id', upload, async (req, res) => {
     try {
-        
-        const category = await Category.findByIdAndUpdate(
-            req.params.id,
-            {
-                cat_name: req.body.cat_name,
-                cat_slug: req.body.cat_slug,
-                metaTitle: req.body.metaTitle,
-                metaDescription: req.body.metaDescription 
-            },
-            { new: true }
-        );
+        const { id } = req.params;
+        const { cat_name, cat_slug, metaTitle, metaDescription } = req.body;
 
-        if (!category) {
-            return res.status(404).send("Category Not Found!");
+        const category = {
+            cat_name,
+            cat_slug,
+            metaTitle,
+            metaDescription,
+        };
+
+        if (req.files && req.files['cat_img']) {
+            const fileName = req.files['cat_img'][0].filename;
+            category.cat_img = fileName;
         }
 
-        res.status(200).send(category);
+        const updatedCategory = await Category.findByIdAndUpdate(id, category, { new: true });
+
+        if (!updatedCategory) {
+            return res.status(404).json({ message: 'Category not found!' });
+        }
+
+        res.status(200).json(updatedCategory);
     } catch (error) {
-        res.status(500).send("An error occurred while updating the category");
+        console.error('Error updating category:', error.message);
+        res.status(500).json({ message: 'An error occurred while updating the category' });
     }
 });
+
 
 router.delete(`/:id`, (req, res) => {
     Category.findByIdAndDelete(req.params.id).then(category =>{

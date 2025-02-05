@@ -4,6 +4,7 @@ const Product = require('../models/product');
 const Category= require('../models/category');
 const SubCategory = require('../models/sub-category');
 const Subsubcategory = require('../models/sub-subcategory');
+const Variation = require('../models/variation');
 const mongoose = require('mongoose');
 const upload = require('../helper/uploadOptions');
 const Pincode = require('../models/pincode');
@@ -24,7 +25,7 @@ router.get(`/`, async (req, res) => {
             const SubCatA = req.query.subcategories.split(',').map(id => id.trim);
             filter.subcategory = { $in: SubCatA}
         }
-        const products = await Product.find(filter).sort({ dateCreated: -1 }).populate('category').populate('subcategory').populate('subsubcategory');
+        const products = await Product.find(filter).sort({ dateCreated: -1 }).populate('category').populate('subcategory').populate('subsubcategory').populate('variation');
         res.send(products);
     } catch (err) {
         res.status(500).json({
@@ -36,7 +37,7 @@ router.get(`/`, async (req, res) => {
 
 
 router.get(`/:id`, async (req, res) => {
-    const product = await Product.findById(req.params.id).populate('category').populate('subcategory').populate('subsubcategory').populate('review');
+    const product = await Product.findById(req.params.id).populate('category').populate('subcategory').populate('subsubcategory').populate('review').populate('variation');
     if(!product) return res.status(500).json({success:false});
     res.send(product);
 })
@@ -58,6 +59,20 @@ router.post('/add', upload, async (req, res) => {
             return res.status(400).send({ success: false, message: "Invalid Subsubcategory!" })
         }
 
+        let variationIds = [];
+        if (req.body.variation) {
+            if (typeof req.body.variation === 'string') {
+                variationIds = req.body.variation.split(',').map(id => new mongoose.Types.ObjectId(id.trim()));
+            } else if (Array.isArray(req.body.variation)) {
+                variationIds = req.body.variation.map(id => new mongoose.Types.ObjectId(id));
+            }
+        }
+
+        const variationData = await Variation.find({ _id: { $in: variationIds } });
+        if (variationData.length !== variationIds.length) {
+            return res.status(400).send({ success: false, message: "Some variations are invalid!" });
+        }
+
         let newProductData = {
             product_name: req.body.product_name,
             description: req.body.description,
@@ -67,6 +82,7 @@ router.post('/add', upload, async (req, res) => {
             category: req.body.category,
             subcategory: req.body.subcategory,
             subsubcategory: req.body.subsubcategory,
+            variation: variationIds,
             countInStock: req.body.countInStock,
             rating: req.body.rating,
             numReviews: req.body.numReviews,
@@ -78,16 +94,14 @@ router.post('/add', upload, async (req, res) => {
 
         if (req.files['product_img']) {
             const fileName = req.files['product_img'][0].filename;
-            const basePath = `${req.protocol}://${req.get('host')}/public/uploads/singleImg/`;
-            newProductData.product_img = `${basePath}${fileName}`;
+            newProductData.product_img = `${fileName}`;  
         }
 
         if (req.files['product_gallery']) {
             const galleryImages = req.files['product_gallery'].map(file => {
-                const basePath = `${req.protocol}://${req.get('host')}/public/uploads/gallery/`;
-                return `${basePath}${file.filename}`;
-            });
-            newProductData.product_gallery = galleryImages;
+                return `${file.filename}`;
+            });    
+            newProductData.product_gallery = galleryImages;  
         }
 
         const newProduct = new Product(newProductData);
@@ -102,72 +116,87 @@ router.post('/add', upload, async (req, res) => {
 
 
 router.put('/edit/:id', upload, async (req, res) => {
-    const productId = req.params.id;
-
-    if (!mongoose.isValidObjectId(productId)) {
-        return res.status(400).send({ success: false, message: "Invalid Product ID!" });
-    }
-
     try {
+        const productId = req.params.id;
+
+        console.log("Received request to update product:", productId, req.body);  
+
+        if (!mongoose.isValidObjectId(productId)) {
+            return res.status(400).json({ success: false, message: "Invalid Product ID!" });
+        }
+
         const category = await Category.findById(req.body.category);
         if (!category) {
             console.error(`Category with ID ${req.body.category} not found`);
-            return res.status(400).send({ success: false, message: "Invalid Category!" });
+            return res.status(400).json({ success: false, message: "Invalid Category!" });
         }
 
         const subcategory = await SubCategory.findById(req.body.subcategory);
         if (!subcategory) {
             console.error(`Subcategory with ID ${req.body.subcategory} not found`);
-            return res.status(400).send({ success: false, message: "Invalid Subcategory!" });
+            return res.status(400).json({ success: false, message: "Invalid Subcategory!" });
         }
 
         const subsubcategory = await Subsubcategory.findById(req.body.subsubcategory);
-        if(!subsubcategory){
-            return res.status(400).send({ success: false, message:"Invalid Subsubcategory!" })
+        if (!subsubcategory) {
+            return res.status(400).json({ success: false, message: "Invalid Subsubcategory!" });
+        }
+
+        let variationIds = [];
+        if (req.body.variation) {
+            if (typeof req.body.variation === 'string') {
+                variationIds = req.body.variation.split(',').map(id => id.trim());
+            } else if (Array.isArray(req.body.variation)) {
+                variationIds = req.body.variation.map(id => id.trim());
+            }
+        }
+
+        variationIds = variationIds.map(id => new mongoose.Types.ObjectId(id));
+
+        const variationData = await Variation.find({ _id: { $in: variationIds } });
+        if (variationData.length !== variationIds.length) {
+            return res.status(400).json({ success: false, message: "Some variations are invalid!" });
         }
 
         let productUpdateData = {
-            product_name: req.body.product_name,
-            description: req.body.description,
-            richDescription: req.body.richDescription,
-            brand: req.body.brand,
-            price: req.body.price,
+            product_name: req.body.product_name || "",
+            description: req.body.description || "",
+            richDescription: req.body.richDescription || "",
+            brand: req.body.brand || "",
+            price: req.body.price || 0,
             category: req.body.category,
             subcategory: req.body.subcategory,
             subsubcategory: req.body.subsubcategory,
-            countInStock: req.body.countInStock,
-            rating: req.body.rating,
-            numReviews: req.body.numReviews,
-            metaTitle: req.body.metaTitle,
-            metaDescription: req.body.metaDescription,
-            product_slug:req.body.product_slug,
-            isFeatured: req.body.isFeatured
+            variation: variationIds, 
+            countInStock: req.body.countInStock || 0,
+            rating: req.body.rating || 0,
+            numReviews: req.body.numReviews || 0,
+            metaTitle: req.body.metaTitle || "",
+            metaDescription: req.body.metaDescription || "",
+            product_slug: req.body.product_slug || "",
+            isFeatured: req.body.isFeatured || false,
         };
 
-        if (req.files['product_img']) {
-            const fileName = req.files['product_img'][0].filename;
-            const basePath = `${req.protocol}://${req.get('host')}/public/uploads/singleImg/`;
-            productUpdateData.product_img = `${basePath}${fileName}`;
+        if (req.files && req.files["product_img"] && req.files["product_img"].length > 0) {
+            productUpdateData.product_img = req.files["product_img"][0].filename;
         }
 
-        if (req.files['product_gallery']) {
-            const galleryImages = req.files['product_gallery'].map(file => {
-                const basePath = `${req.protocol}://${req.get('host')}/public/uploads/gallery/`;
-                return `${basePath}${file.filename}`;
-            });
-            productUpdateData.product_gallery = galleryImages;
+        if (req.files && req.files["product_gallery"] && req.files["product_gallery"].length > 0) {
+            productUpdateData.product_gallery = req.files["product_gallery"].map(file => file.filename);
         }
 
         const updatedProduct = await Product.findByIdAndUpdate(productId, productUpdateData, { new: true });
 
         if (!updatedProduct) {
-            return res.status(404).send({ success: false, message: "Product not found!" });
+            return res.status(404).json({ success: false, message: "Product not found!" });
         }
 
-        res.status(200).send(updatedProduct);
+        console.log("Product updated successfully:", updatedProduct);
+        return res.status(200).json({ success: true, message: "Product updated successfully!", product: updatedProduct });
+
     } catch (error) {
-        console.error('Error updating product:', error);
-        res.status(500).send({ success: false, message: "Failed to update product!" });
+        console.error("Error updating product:", error);
+        return res.status(500).json({ success: false, message: "Failed to update product!", error: error.message });
     }
 });
   
