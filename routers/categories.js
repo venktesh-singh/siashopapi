@@ -11,7 +11,7 @@ router.get(`/`, async (req, res) => {
         if (req.query.subcategories) {
             filter = { subCategory: req.query.subcategories.split(',') };
         }
-        const categories = await Category.find(filter).sort({ dateCreated: 1 });
+        const categories = await Category.find(filter).sort({ dateCreated: -1 });
         res.send(categories);
     } catch (err) {
         res.status(500).json({
