@@ -8,7 +8,7 @@ const upload      = require('../helper/uploadOptions');
 
 router.get('/', async(req, res) => {
     try {
-        const variations = await Variation.find();
+        const variations = await Variation.find().sort({ dateCreated: -1 });
         res.status(200).send(variations);
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
