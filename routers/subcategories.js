@@ -8,7 +8,7 @@ const router = express.Router();
 // Get all subcategories
 router.get('/', async (req, res) => {
     try {
-        const subcategories = await SubCategory.find().populate('category');
+        const subcategories = await SubCategory.find().populate('category').sort({ dateCreated: -1 });
         res.status(200).send(subcategories);
     } catch (error) {
         res.status(500).send("An error occurred while fetching subcategories");
