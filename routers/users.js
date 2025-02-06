@@ -6,7 +6,7 @@ const jwt     = require('jsonwebtoken');
 
 router.get(`/`, async (req, res) => {
     try {
-        const users = await User.find();
+        const users = await User.find().sort({ dateCreated: -1 });
         res.status(200).send(users);
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
