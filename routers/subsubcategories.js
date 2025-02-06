@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const subsubcat = await Subsubcategory.find().populate('category').populate('subcategory');
+        const subsubcat = await Subsubcategory.find().populate('category').populate('subcategory').sort({ dateCreated: -1 });
         console.log("check subsubcategory", subsubcat)
         if (subsubcat.length > 0) {
             return res.status(200).json({ success: true, message: "Get All Subsubcategories", subsubcat });
