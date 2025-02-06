@@ -81,6 +81,8 @@ invoiceSchema.pre(/^find/, function (next) {
     next();
 });
 
+invoiceSchema.index({ invoiceNumber: 1 }, { unique: true, background: true });
+
 const Invoice = mongoose.model('Invoice', invoiceSchema);
 
 module.exports = Invoice;
